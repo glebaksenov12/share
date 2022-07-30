@@ -1,0 +1,164 @@
+diff --git a/package/kernel/mac80211/files/lib/wifi/mac80211.sh b/package/kernel/mac80211/files/lib/wifi/mac80211.sh
+index 6aa46b0c74..5c66224105 100644
+--- a/package/kernel/mac80211/files/lib/wifi/mac80211.sh
++++ b/package/kernel/mac80211/files/lib/wifi/mac80211.sh
+@@ -174,13 +174,13 @@ detect_mac80211() {
+ 			set wireless.radio${devidx}.channel=${channel}
+ 			set wireless.radio${devidx}.band=${mode_band}
+ 			set wireless.radio${devidx}.htmode=$htmode
+-			set wireless.radio${devidx}.disabled=1
++			set wireless.radio${devidx}.disabled=0
+ 
+ 			set wireless.default_radio${devidx}=wifi-iface
+ 			set wireless.default_radio${devidx}.device=radio${devidx}
+ 			set wireless.default_radio${devidx}.network=lan
+ 			set wireless.default_radio${devidx}.mode=ap
+-			set wireless.default_radio${devidx}.ssid=OpenWrt
++			set wireless.default_radio${devidx}.ssid=HR1901
+ 			set wireless.default_radio${devidx}.encryption=none
+ EOF
+ 		uci -q commit wireless
+diff --git a/target/linux/ipq40xx/base-files/etc/board.d/01_leds b/target/linux/ipq40xx/base-files/etc/board.d/01_leds
+index 884b265dcb..7ca85f5ec3 100644
+--- a/target/linux/ipq40xx/base-files/etc/board.d/01_leds
++++ b/target/linux/ipq40xx/base-files/etc/board.d/01_leds
+@@ -91,6 +91,16 @@ qxwlan,e2600ac-c2)
+ 	ucidef_set_led_wlan "wlan2g" "WLAN0" "green:wlan0" "phy0tpt"
+ 	ucidef_set_led_wlan "wlan5g" "WLAN1" "green:wlan1" "phy1tpt"
+ 	;;
++wf,hr1901 |\
++wf,hr1901n)
++        ucidef_set_led_wlan "wlan2g" "WLAN2G" "hr1901:blue:wlan2g" "phy0tpt"
++	ucidef_set_led_wlan "wlan5g" "WLAN5G" "hr1901:blue:wlan5g" "phy1tpt"
++	ucidef_set_led_switch "wan" "WAN" "hr1901:blue:wan" "switch0" "0x02"
++	ucidef_set_led_switch "lan1" "LAN1" "hr1901:blue:lan1" "switch0" "0x04"
++	ucidef_set_led_switch "lan2" "LAN2" "hr1901:blue:lan2" "switch0" "0x08"
++	ucidef_set_led_switch "lan3" "LAN3" "hr1901:blue:lan3" "switch0" "0x10"
++	ucidef_set_led_switch "lan4" "LAN4" "hr1901:blue:lan4" "switch0" "0x20"
++        ;;
+ zyxel,nbg6617 |\
+ zyxel,wre6606)
+ 	ucidef_set_led_wlan "wlan2g" "WLAN2G" "green:wlan2g" "phy0tpt"
+diff --git a/target/linux/ipq40xx/base-files/etc/board.d/02_network b/target/linux/ipq40xx/base-files/etc/board.d/02_network
+index 2aa4886e6a..3c71a1cce3 100644
+--- a/target/linux/ipq40xx/base-files/etc/board.d/02_network
++++ b/target/linux/ipq40xx/base-files/etc/board.d/02_network
+@@ -67,6 +67,8 @@ ipq40xx_setup_interfaces()
+ 		;;
+ 	avm,fritzbox-4040|\
+ 	linksys,ea6350v3|\
++	wf,hr1901 |\
++	wf,hr1901n |\
+ 	linksys,ea8300)
+ 		ucidef_set_interfaces_lan_wan "eth0" "eth1"
+ 		ucidef_add_switch "switch0" \
+diff --git a/target/linux/ipq40xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata b/target/linux/ipq40xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
+index c02b12dceb..4dea5efbe0 100644
+--- a/target/linux/ipq40xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
++++ b/target/linux/ipq40xx/base-files/etc/hotplug.d/firmware/11-ath10k-caldata
+@@ -51,6 +51,11 @@ case "$FIRMWARE" in
+ 		caldata_extract_mmc "0:ART" 0x9000 0x2f20
+ 		ath10k_patch_mac $(mmc_get_mac_binary ARTMTD 0x12)
+ 		;;
++	wf,hr1901 |\
++	wf,hr1901)
++		caldata_extract "ART" 0x9000 0x2f20
++		ath10k_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +4)
++		;;
+ 	esac
+ 	;;
+ "ath10k/pre-cal-ahb-a000000.wifi.bin")
+@@ -127,6 +132,11 @@ case "$FIRMWARE" in
+ 		caldata_extract_mmc "0:ART" 0x1000 0x2f20
+ 		ath10k_patch_mac $(mmc_get_mac_binary ARTMTD 0x0)
+ 		;;
++	wf,hr1901 |\
++	wf,hr1901n)
++		caldata_extract "ART" 0x1000 0x2f20
++		ath10k_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +2)
++		;;
+ 	zyxel,nbg6617 |\
+ 	zyxel,wre6606)
+ 		caldata_extract "ART" 0x1000 0x2f20
+@@ -208,6 +218,11 @@ case "$FIRMWARE" in
+ 		caldata_extract_mmc "0:ART" 0x5000 0x2f20
+ 		ath10k_patch_mac $(mmc_get_mac_binary ARTMTD 0xc)
+ 		;;
++	wf,hr1901 |\
++	wf,hr1901n)
++		caldata_extract "ART" 0x5000 0x2f20
++		ath10k_patch_mac $(macaddr_add $(cat /sys/class/net/eth0/address) +3)
++		;;
+ 	zyxel,nbg6617 |\
+ 	zyxel,wre6606)
+ 		caldata_extract "ART" 0x5000 0x2f20
+diff --git a/target/linux/ipq40xx/base-files/lib/upgrade/platform.sh b/target/linux/ipq40xx/base-files/lib/upgrade/platform.sh
+index e8c94409a7..72436e869d 100644
+--- a/target/linux/ipq40xx/base-files/lib/upgrade/platform.sh
++++ b/target/linux/ipq40xx/base-files/lib/upgrade/platform.sh
+@@ -105,6 +105,7 @@ platform_do_upgrade() {
+ 	avm,fritzbox-7530 |\
+ 	avm,fritzrepeater-1200 |\
+ 	avm,fritzrepeater-3000 |\
++	wf,hr1901n |\
+ 	buffalo,wtr-m2133hp |\
+ 	cilab,meshpoint-one |\
+ 	edgecore,ecw5211 |\
+diff --git a/target/linux/ipq40xx/config-5.10 b/target/linux/ipq40xx/config-5.10
+index 403ed6e6e4..71866c902b 100644
+--- a/target/linux/ipq40xx/config-5.10
++++ b/target/linux/ipq40xx/config-5.10
+@@ -247,13 +247,17 @@ CONFIG_MFD_SYSCON=y
+ CONFIG_MIGHT_HAVE_CACHE_L2X0=y
+ CONFIG_MIGRATION=y
+ CONFIG_MMC=y
++CONFIG_MMC_ARMMMCI=y
+ CONFIG_MMC_BLOCK=y
++CONFIG_MMC_BLOCK_MINORS=32
+ CONFIG_MMC_CQHCI=y
++CONFIG_MMC_QCOM_DML=y
+ CONFIG_MMC_SDHCI=y
+ CONFIG_MMC_SDHCI_IO_ACCESSORS=y
+ CONFIG_MMC_SDHCI_MSM=y
+ # CONFIG_MMC_SDHCI_PCI is not set
+ CONFIG_MMC_SDHCI_PLTFM=y
++# CONFIG_MMC_TIFM_SD is not set
+ CONFIG_MODULES_USE_ELF_REL=y
+ # CONFIG_MSM_GCC_8660 is not set
+ # CONFIG_MSM_GCC_8916 is not set
+diff --git a/target/linux/ipq40xx/image/generic.mk b/target/linux/ipq40xx/image/generic.mk
+index 0112e18ac0..7bc90dc13d 100644
+--- a/target/linux/ipq40xx/image/generic.mk
++++ b/target/linux/ipq40xx/image/generic.mk
+@@ -951,6 +951,31 @@ define Device/qxwlan_e2600ac-c2
+ endef
+ TARGET_DEVICES += qxwlan_e2600ac-c2
+ 
++define Device/wf_hr1901n
++	$(call Device/FitImage)
++	$(call Device/UbiFit)
++	DEVICE_DTS := qcom-ipq4019-hr1901n
++	KERNEL_INSTALL := 1
++	BLOCKSIZE := 128k
++	PAGESIZE := 2048
++	BOARD_NAME := hr1901
++	DEVICE_TITLE := WF HR1901N
++endef
++TARGET_DEVICES += wf_hr1901n
++
++
++define Device/wf_hr1901
++	$(call Device/FitImage)
++	DEVICE_TITLE := WF HR1901
++	BOARD_NAME := hr1901
++	DEVICE_DTS := qcom-ipq4019-hr1901
++	KERNEL_SIZE := 4096k
++	IMAGE_SIZE := 26624k
++	IMAGES := sysupgrade.bin
++	IMAGE/sysupgrade.bin := append-kernel | append-rootfs | pad-rootfs | append-metadata
++endef
++TARGET_DEVICES += wf_hr1901
++
+ define Device/teltonika_rutx10
+ 	$(call Device/FitImage)
+ 	$(call Device/UbiFit)
